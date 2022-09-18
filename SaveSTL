@@ -1,0 +1,34 @@
+'Declare variables to be used
+Dim swApp As SldWorks.SldWorks
+Dim swmodel As SldWorks.ModelDoc2
+Dim swModelExt As SldWorks.ModelDocExtension
+Dim ModelPath As String
+Dim FullPath As String
+Dim longstatus As Long
+Dim longwarnings As Long
+Dim errors As Long
+Dim boolstatus As Boolean
+
+Sub main()
+
+'Connect to SOLIDWORKS
+Set swApp = Application.SldWorks
+
+'Connect to open model
+Set swmodel = swApp.ActiveDoc
+
+'Connect to Model Extension
+Set swModelExt = swmodel.Extension
+
+'get file path
+
+ModelPath = swmodel.GetPathName
+
+'trim off file extension
+FullPath = Left(ModelPath, Len(ModelPath) - 7)
+
+' Save As       Change the extension ".stl" below to switch to any export format
+
+longstatus = swModelExt.SaveAs(FullPath & ".stl", 0, 2, Nothing, errors, longwarnings)
+
+End Sub
