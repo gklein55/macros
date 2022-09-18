@@ -8,6 +8,9 @@ Dim longstatus As Long
 Dim longwarnings As Long
 Dim errors As Long
 Dim boolstatus As Boolean
+Dim config As SldWorks.Configuration
+Dim cusPropMgr As SldWorks.CustomPropertyManager
+Dim RevValue As String
 
 Sub main()
 
@@ -20,15 +23,42 @@ Set swmodel = swApp.ActiveDoc
 'Connect to Model Extension
 Set swModelExt = swmodel.Extension
 
-'get file path
+'Get Revision value
+GetRevision
 
+'Get file path
 ModelPath = swmodel.GetPathName
 
 'trim off file extension
 FullPath = Left(ModelPath, Len(ModelPath) - 7)
 
-' Save As       Change the extension ".stl" below to switch to any export format
+'Change Export Quality
+ChangeQuality
 
-longstatus = swModelExt.SaveAs(FullPath & ".stl", 0, 2, Nothing, errors, longwarnings)
+' Save As       Change the extension ".stl" below to switch to any export format
+longstatus = swModelExt.SaveAs(FullPath & "-" & RevValue & ".stl", 0, 2, Nothing, errors, longwarnings)
 
 End Sub
+
+Sub ChangeQuality()
+
+'set user export options to high resolution STL Export
+boolstatus = swApp.SetUserPreferenceIntegerValue(swUserPreferenceIntegerValue_e.swSTLQuality, swSTLQuality_Custom)
+boolstatus = swApp.SetUserPreferenceIntegerValue(swUserPreferenceDoubleValue_e.swSTLDeviation, 0.00013)
+boolstatus = swApp.SetUserPreferenceIntegerValue(swUserPreferenceDoubleValue_e.swSTLAngleTolerance, 0.5)
+
+End Sub
+
+Sub GetRevision()
+
+'Get Configuration
+Set config = swmodel.GetActiveConfiguration
+
+'Get the property manager for the configuration
+Set cusPropMgr = config.CustomPropertyManager
+
+'Get the revision property
+RevValue = cusPropMgr.Get("Revision")
+
+End Sub
+
