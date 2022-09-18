@@ -7,7 +7,6 @@ Dim FullPath As String
 Dim longstatus As Long
 Dim longwarnings As Long
 Dim errors As Long
-Dim boolstatus As Boolean
 Dim config As SldWorks.Configuration
 Dim cusPropMgr As SldWorks.CustomPropertyManager
 Dim RevValue As String
@@ -43,9 +42,9 @@ End Sub
 Sub ChangeQuality()
 
 'set user export options to high resolution STL Export
-boolstatus = swApp.SetUserPreferenceIntegerValue(swUserPreferenceIntegerValue_e.swSTLQuality, swSTLQuality_Custom)
-boolstatus = swApp.SetUserPreferenceIntegerValue(swUserPreferenceDoubleValue_e.swSTLDeviation, 0.00013)
-boolstatus = swApp.SetUserPreferenceIntegerValue(swUserPreferenceDoubleValue_e.swSTLAngleTolerance, 0.5)
+longstatus = swApp.SetUserPreferenceIntegerValue(swUserPreferenceIntegerValue_e.swSTLQuality, swSTLQuality_Custom)
+longstatus = swApp.SetUserPreferenceIntegerValue(swUserPreferenceDoubleValue_e.swSTLDeviation, 0.00013)
+longstatus = swApp.SetUserPreferenceIntegerValue(swUserPreferenceDoubleValue_e.swSTLAngleTolerance, 0.5)
 
 End Sub
 
@@ -61,4 +60,3 @@ Set cusPropMgr = config.CustomPropertyManager
 RevValue = cusPropMgr.Get("Revision")
 
 End Sub
-
