@@ -32,14 +32,14 @@ ModelPath = swmodel.GetPathName
 FullPath = Left(ModelPath, Len(ModelPath) - 7)
 
 'Change Export Quality
-ChangeQuality
+ChangeQuality swApp
 
 ' Save As       Change the extension ".stl" below to switch to any export format
 longstatus = swModelExt.SaveAs(FullPath & "-" & RevValue & ".stl", 0, 2, Nothing, errors, longwarnings)
 
 End Sub
 
-Sub ChangeQuality()
+Sub ChangeQuality(swApp As SldWorks.SldWorks)
 
 'set user export options to high resolution STL Export
 longstatus = swApp.SetUserPreferenceIntegerValue(swUserPreferenceIntegerValue_e.swSTLQuality, swSTLQuality_Custom)
