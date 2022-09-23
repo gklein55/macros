@@ -23,7 +23,7 @@ Set swmodel = swApp.ActiveDoc
 Set swModelExt = swmodel.Extension
 
 'Get Revision value
-GetRevision
+GetRevision swmodel, swApp
 
 'Get file path
 ModelPath = swmodel.GetPathName
@@ -48,9 +48,9 @@ longstatus = swApp.SetUserPreferenceIntegerValue(swUserPreferenceDoubleValue_e.s
 
 End Sub
 
-Sub GetRevision()
+Sub GetRevision(swmodel As SldWorks.ModelDoc2, swApp As SldWorks.SldWorks)
 
-'Get Configuration
+
 Set config = swmodel.GetActiveConfiguration
 
 'Get the property manager for the configuration
@@ -60,3 +60,4 @@ Set cusPropMgr = config.CustomPropertyManager
 RevValue = cusPropMgr.Get("Revision")
 
 End Sub
+
