@@ -1,0 +1,27 @@
+Option Explicit
+Dim swApp As SldWorks.SldWorks
+Dim swModel As ModelDoc2
+Dim swModelDocExt As ModelDocExtension
+Dim swCustProp As CustomPropertyManager
+Dim val As String
+Dim valout As String
+Dim bool As Boolean
+Sub main()
+Set swApp = Application.SldWorks
+Set swModel = swApp.ActiveDoc
+Dim equ As String
+Dim Ethick As String
+Dim FileName As String
+Dim FilePath As String
+Ethick = 0.003125
+FilePath = swModel.GetPathName
+FileName = Right(FilePath, Len(FilePath) - InStrRev(FilePath, "\"))
+equ = Chr(34) & "SW-SurfaceArea@" & FilePath & Chr(34) & " * $PRP:" & Chr(34) & "Ethick" & Chr(34)
+Set swModelDocExt = swModel.Extension
+'Upgrade old files to support new equation property type
+bool = swModelDocExt.UpgradeLegacyCustomProperties(True)
+' Get the custom property data
+Set swCustProp = swModelDocExt.CustomPropertyManager("")
+bool = swCustProp.Add3("Ethick", swCustomInfoText, Ethick, swCustomPropertyDeleteAndAdd)
+bool = swCustProp.Add3("Ecoat", swCustomInfoEquation, equ, swCustomPropertyDeleteAndAdd)
+End Sub
