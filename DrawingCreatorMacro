@@ -1,0 +1,497 @@
+    'Macro creates detailed drawings for all files in an assembly
+    'updating the template path for the BOM and Drawing Templates is needed
+    'rough but it works
+    
+    Dim swApp As SldWorks.SldWorks
+    Dim swModel As SldWorks.ModelDoc2
+    Dim ExporDir As String
+    Const BOMTempConst As String = "D:\Program Files\SOLIDWORKS Corp\SOLIDWORKS (2)\lang\english\bom-standard.sldbomtbt"
+    Const DrawTemplate As String = "C:\ProgramData\SolidWorks\SOLIDWORKS 2022\templates\Drawing.drwdot"
+    Public FolderPath As String
+    Dim Title As String
+    Dim errs As Long
+    Dim warns As Long
+    Dim Path As String
+    Dim swActiveView As SldWorks.View
+    Dim swBomTable As SldWorks.BomTableAnnotation
+    Dim swBomAnn As BomTableAnnotation
+    Dim swBomFeat As SldWorks.BomFeature
+    Dim AnchorType As Long
+    Dim BomType As Long
+    Dim Configuration As String
+    Dim TableTemplate As String
+    Dim Names As Variant
+    Dim Visible As Variant
+    Dim boolstatus As Boolean
+    Dim ViewName As String
+    Dim swDrawing As SldWorks.DrawingDoc
+    Dim swFeature As SldWorks.Feature
+    Dim swSubFeature As SldWorks.Feature
+    Dim swModelDocExt As SldWorks.ModelDocExtension
+    Dim swSelMgr As SldWorks.SelectionMgr
+    Dim swSheet As SldWorks.Sheet
+    Dim swView As SldWorks.View
+    Dim bFound As Boolean
+    Dim vViewNames As Variant
+    Dim vViewName As Variant
+    Dim strViewName As String
+    Dim lNumViews As Long
+    Dim dSheetScale As Double
+    Dim vSheetProperties As Variant
+    Dim nPaperSize As swDwgPaperSizes_e
+    Dim dWidth As Double
+    Dim dHeight As Double
+    Dim vNotes As Variant
+    Dim autoballoonParams As SldWorks.AutoBalloonOptions
+    Dim vAnnotations As Variant
+    Const swSheetWidth As Double = 0.8636
+    Const swSheetHeight As Double = 0.5588
+    Dim ModelName As String
+    Dim shortModelName As String
+    Dim MyPath As String
+    
+    
+    
+
+Sub main()
+
+
+    Dim sDocName As String
+    Dim vDepend As Variant
+    Dim bRet As Boolean
+    Dim i As Long
+    Dim file As String
+    Dim vFile() As String
+    Dim Extension As String
+    
+    Set swApp = Application.SldWorks
+    Set swModel = swApp.ActiveDoc
+    
+
+    
+    
+    If Not swModel Is Nothing Then
+        sDocName = swModel.GetPathName
+    Else
+        sDocName = sDefaultName
+    End If
+    
+
+MyPath = Left(swModel.GetPathName, InStrRev(swModel.GetPathName, "\"))
+
+
+
+
+    Dim vModelName As Variant
+    Dim sTitle As String
+    sTitle = swModel.GetTitle
+    vModelName = Split(sTitle, ".")
+    
+            'create drawing of
+
+    shortModelName = vModelName(0)
+    
+            'create drawing of parent file
+            vFile = Split(sDocName, ".")
+            Extension = vFile(1)
+            
+            DrawingSelector Extension, sDocName
+    
+    
+    
+    vDepend = swApp.GetDocumentDependencies2(sDocName, True, True, False)
+    
+    
+    Select Case Extension
+    
+    
+    Case "SLDPRT"
+        Exit Sub
+    Case "sldprt"
+        Exit Sub
+    End Select
+    
+
+    
+    
+    Dim DepCount As Long
+    DepCount = (UBound(vDepend) - LBound(vDepend) + 1) / 2
+    Dim response As Integer
+    
+
+response = MsgBox("You are about to make " & DepCount & " drawings continue?", vbOKCancel)
+
+If response = 1 Then
+    
+
+    
+    Debug.Print sDocName
+    If IsEmpty(vDepend) Then
+        Debug.Print "    No dependencies."
+        Exit Sub
+    End If
+    For i = 0 To (UBound(vDepend))
+        
+        
+        
+        'split to find parts and assemblies
+        
+        Dim n As Long
+        n = InStr(1, vDepend(i), ".")
+        
+        
+        If n = 0 Then
+            'not a model do nothing
+        Else
+            'make drawing for each model
+            
+
+    
+            'create drawing of
+
+ 
+            
+    Dim vCompName() As String
+    
+    
+    
+    
+
+            file = vDepend(i)
+            vFile = Split(file, ".")
+            Extension = vFile(1)
+            Path = vDepend(i)
+            
+            MyPath = Left(file, InStrRev(file, "\"))
+            shortModelName = Mid(file, InStrRev(file, "\", Len(file)) + 1, Len(file))
+            vCompName = Split(shortModelName, ".")
+            shortModelName = vCompName(0)
+
+                DrawingSelector Extension, Path
+            
+        End If
+        
+
+        
+        
+    Next i
+    
+    
+    Else
+        
+    End If
+        MsgBox ("All drawings completed, get back to work!")
+End Sub
+
+
+
+Sub CreatePartDrawing(ModelName As String)
+    
+    Dim swDrawing As SldWorks.DrawingDoc
+    Dim swFeature As SldWorks.Feature
+    Dim swSubFeature As SldWorks.Feature
+    Dim swModelDocExt As SldWorks.ModelDocExtension
+    Dim swSelMgr As SldWorks.SelectionMgr
+    Dim swSheet As SldWorks.Sheet
+    Dim swView As SldWorks.View
+    Dim bFound As Boolean
+    Dim vViewNames As Variant
+    Dim vViewName As Variant
+    Dim strViewName As String
+    Dim lNumViews As Long
+    Dim dSheetScale As Double
+    Dim vSheetProperties As Variant
+    Dim nPaperSize As swDwgPaperSizes_e
+    Dim dWidth As Double
+    Dim dHeight As Double
+    Dim swViewAlignWith As SldWorks.View
+
+    Set swApp = Application.SldWorks
+    Set swModel = swApp.ActiveDoc
+    
+
+    
+    
+    Dim swSheetWidth As Double
+    swSheetWidth = 0.8636
+    Dim swSheetHeight As Double
+    swSheetHeight = 0.5588
+    Set swModel = swApp.NewDocument(DrawTemplate, 12, swSheetWidth, swSheetHeight)
+    
+    Set swDrawing = swApp.ActiveDoc
+    
+    Status = swDrawing.GenerateViewPaletteViews(ModelName)
+    
+    ' Get current sheet
+    Set swSheet = swDrawing.GetCurrentSheet
+    vSheetProperties = swSheet.GetProperties
+    dSheetScale = vSheetProperties(2) / vSheetProperties(3)
+    nPaperSize = swSheet.GetSize(dWidth, dHeight)
+
+
+    lNumViews = 0
+    
+    vViewNames = swDrawing.GetDrawingPaletteViewNames
+    If (Not (IsEmpty(vViewNames))) Then
+        lNumViews = (UBound(vViewNames) - LBound(vViewNames) + 1)
+        Debug.Print "Number of views on palette = " & lNumViews
+        For Each vViewName In vViewNames
+            strViewName = vViewName
+            
+            
+            If (strViewName = "*Front") Then
+                Set swView = swDrawing.DropDrawingViewFromPalette2(strViewName, dWidth / 5#, dHeight / 2#, 0#)
+                
+                swView.SetName2 ("Front")
+            End If
+            
+            If (strViewName = "*Bottom") Then
+                Set swView = swDrawing.DropDrawingViewFromPalette2(strViewName, dWidth / 5#, dHeight / 4#, 0#)
+                
+                swView.SetName2 ("Bottom")
+            End If
+            If (strViewName = "*Isometric") Then
+                Set swView = swDrawing.DropDrawingViewFromPalette2(strViewName, dWidth / 1.125, dHeight / 1.125, 0#)
+
+                swView.SetName2 ("Isometric")
+     
+                swView.SetDisplayMode4 False, 3, True, True, True
+            End If
+            If (strViewName = "*Top") Then
+                Set swView = swDrawing.DropDrawingViewFromPalette2(strViewName, dWidth / 5#, dHeight / 1.1, 0#)
+                
+                swView.SetName2 ("Top")
+            End If
+            
+            
+            If (strViewName = "*Right") Then
+                Set swView = swDrawing.DropDrawingViewFromPalette2(strViewName, dWidth / 1.5, dHeight / 2#, 0#)
+                
+                swView.SetName2 ("Right")
+            End If
+        Next vViewName
+    End If
+    
+    
+    'view alignment
+    
+    
+'align right view
+ 
+        Status = swDrawing.ActivateView("Right")
+        Set swView = swDrawing.ActiveDrawingView
+        Set swModelDocExt = swModel.Extension
+        ' Select Drawing View3 and select it to be
+        ' the base view
+        Status = swModelDocExt.SelectByID2("Front", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        Set swSelMgr = swModel.SelectionManager
+        Set swViewAlignWith = swSelMgr.GetSelectedObject6(1, -1)
+        ' Drawing View6 aligns horizontally
+        ' with the center of Drawing View3
+        Status = swView.AlignWithView(swAlignViewHorizontalCenter, swViewAlignWith)
+    
+'align top
+
+        Status = swDrawing.ActivateView("Top")
+        Set swView = swDrawing.ActiveDrawingView
+        Set swModelDocExt = swModel.Extension
+        ' Select Drawing View3 and select it to be
+        ' the base view
+        Status = swModelDocExt.SelectByID2("Front", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        Set swSelMgr = swModel.SelectionManager
+        Set swViewAlignWith = swSelMgr.GetSelectedObject6(1, -1)
+        ' Drawing View6 aligns horizontally
+        ' with the center of Drawing View3
+        Status = swView.AlignWithView(swAlignViewVerticalCenter, swViewAlignWith)
+  
+'align Bottom
+
+        Status = swDrawing.ActivateView("Bottom")
+        Set swView = swDrawing.ActiveDrawingView
+        Set swModelDocExt = swModel.Extension
+
+        Status = swModelDocExt.SelectByID2("Front", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0)
+        Set swSelMgr = swModel.SelectionManager
+        Set swViewAlignWith = swSelMgr.GetSelectedObject6(1, -1)
+
+        Status = swView.AlignWithView(swAlignViewVerticalCenter, swViewAlignWith)
+  
+    
+    
+    Dim vAnnotations As Variant
+    vAnnotations = swDrawing.InsertModelAnnotations3(0, 18513944, True, True, False, True)
+    
+    Set swModel = swApp.ActiveDoc
+    Set swModelDocExt = swModel.Extension
+    Set swSelMgr = swModel.SelectionManager
+    
+    swModelDocExt.SelectAll
+    
+    boolstatus = swDrawing.Extension.AlignDimensions(0, 0)
+    
+
+    
+    
+    Title = MyPath & shortModelName & ".slddrw"
+    
+
+
+    swModelDocExt.SaveAs Title, swSaveAsCurrentVersion, swSaveAsOptions_Silent, Nothing, errs, warns
+    
+    swApp.QuitDoc Title
+    
+End Sub
+Sub CreateAssemblyDrawing(ModelName As String)
+    
+
+    
+
+    Set swApp = Application.SldWorks
+    Set swModel = swApp.ActiveDoc
+
+    Set swModel = swApp.NewDocument(DrawTemplate, 12, swSheetWidth, swSheetHeight)
+    
+    Set swDrawing = swApp.ActiveDoc
+    
+    Status = swDrawing.GenerateViewPaletteViews(ModelName)
+    
+    ' Get current sheet
+    Set swSheet = swDrawing.GetCurrentSheet
+    vSheetProperties = swSheet.GetProperties
+    dSheetScale = vSheetProperties(2) / vSheetProperties(3)
+    nPaperSize = swSheet.GetSize(dWidth, dHeight)
+
+    lNumViews = 0
+    
+    vViewNames = swDrawing.GetDrawingPaletteViewNames
+    If (Not (IsEmpty(vViewNames))) Then
+        lNumViews = (UBound(vViewNames) - LBound(vViewNames) + 1)
+        
+        For Each vViewName In vViewNames
+            strViewName = vViewName
+            
+            
+
+            If (strViewName = "*Isometric") Then
+                Set swView = swDrawing.DropDrawingViewFromPalette2(strViewName, dWidth / 2, dHeight / 2, 0#)
+                
+                 swView.SetName2 ("Isometric")
+                 
+                 
+            End If
+
+        Next vViewName
+    End If
+    
+    
+    
+    
+    Set swModel = swApp.ActiveDoc
+    Set swModelDocExt = swModel.Extension
+    Set swSelMgr = swModel.SelectionManager
+    
+    swModel.Extension.SelectByID2 "Isometric", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0
+    swDrawing.ActivateView "Isometric"
+    
+    'insert BOM
+
+    
+
+    AnchorType = swBOMConfigurationAnchorType_e.swBOMConfigurationAnchor_TopLeft
+    Configuration = ""
+    TableTemplate = ""
+    
+
+ 
+Set swActiveView = swDrawing.ActiveDrawingView
+ 
+If swActiveView Is Nothing Then
+
+    Exit Sub
+
+End If
+
+
+ 
+Set swBomTable = swActiveView.InsertBomTable4(False, 5.6868495691256E-03, 0.556839879028828, swBOMConfigurationAnchorType_e.swBOMConfigurationAnchor_TopLeft, swBomType_e.swBomType_Indented, "", BOMTempConst, False, 0, False)
+
+' insert balloons
+
+    
+    
+    
+    Set swDrawing = swModel
+    Set swSheet = swDrawing.GetCurrentSheet
+    
+    Set swView = swDrawing.GetFirstView
+    ViewName = swView.GetName2
+    
+    
+    
+    swModel.Extension.SelectByID2 "Isometric", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0
+    
+
+    
+    swDrawing.ActivateView "Isometric"
+
+    Set autoballoonParams = swDrawing.CreateAutoBalloonOptions()
+    autoballoonParams.Layout = swDetailingBalloonLayout_Square
+    autoballoonParams.ReverseDirection = False
+    autoballoonParams.IgnoreMultiple = True
+    autoballoonParams.InsertMagneticLine = True
+    autoballoonParams.LeaderAttachmentToFaces = True
+    autoballoonParams.Style = swBS_Circular
+    autoballoonParams.Size = swBF_5Chars
+    autoballoonParams.UpperTextContent = swBalloonTextItemNumber
+    autoballoonParams.Layername = "-None-"
+    autoballoonParams.ItemNumberStart = 1
+    autoballoonParams.ItemNumberIncrement = 1
+    autoballoonParams.ItemOrder = swBalloonItemNumbers_DoNotChangeItemNumbers
+    autoballoonParams.EditBalloons = True
+    autoballoonParams.EditBalloonOption = swEditBalloonOption_Resequence
+    
+    vNotes = swDrawing.AutoBalloon5(autoballoonParams)
+    
+    
+    swModel.Extension.SelectByID2 "Isometric", "DRAWINGVIEW", 0, 0, 0, False, 0, Nothing, 0
+    Set swView = swSelMgr.GetSelectedObject6(1, -1)
+    swView.SetDisplayMode4 False, 3, True, True, True
+    
+    
+    Title = MyPath & shortModelName & ".slddrw"
+    
+
+    swModelDocExt.SaveAs Title, swSaveAsCurrentVersion, swSaveAsOptions_Silent, Nothing, errs, warns
+    
+    swApp.QuitDoc Title
+    
+End Sub
+
+
+
+Sub DrawingSelector(Extension, Path)
+
+           Select Case Extension
+           
+                Case "sldprt"
+                
+                    CreatePartDrawing (Path)
+           
+                Case "SLDPRT"
+                    
+                    CreatePartDrawing (Path)
+                
+                Case "sldasm"
+                    
+                    
+                    CreateAssemblyDrawing (Path)
+                    
+                Case "SLDASM"
+                    
+                    CreateAssemblyDrawing (Path)
+                
+           End Select
+
+End Sub
+
+
